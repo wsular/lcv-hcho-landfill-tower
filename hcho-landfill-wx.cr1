@@ -1,0 +1,123 @@
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+' Meteorological tower at Asotin County Landfill
+' Lewiston-Clarkston Valley Formaldehyde Study (2016)
+'
+' Copyright 2016 :: Patrick O'Keeffe
+' Laboratory for Atmospheric Research at Washington State University
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+Const WX_COM = Com1   'C1/C2
+Const WX_BAUD = 4800
+Const WX_FMT = 3 '8/n/1, RS232
+Const WX_BUFF = 250
+Const DOLLAR_W = &h2457 ' "$W"
+Const DOLLAR_G = &h2447 ' "$G"
+Const CRLF = &h0D0A ' <CR><LF>
+
+'record lengths from Table 1, PB100 WeatherStation Technical Manual r1.007
+Public wimda As String * 81+1 
+Public gprmc As String * 74+1
+
+Public wx_bytes
+Public gps_bytes
+
+
+
+Public metvals(10)
+' "IMDA," consumed
+'Alias metvals(1) = barometric pressure, inches of mercury
+' ",I," consumed
+Alias metvals(2) = P_10m 'barometric pressure, bars
+' ",B," consumed
+Alias metvals(3) = T_10m 'air temperature, degrees C
+' ",C,,," consumed (no water temperature or units)
+Alias metvals(4) = RH_10m 'relative humidity, %
+' ",," consumed(no absolute humidity)
+Alias metvals(5) = dewpoint_10m 'dewpoint, degrees C
+' ",C," consumed
+Alias metvals(6) = WD_true_10m 'degrees E of TN
+' ",T," consumed
+Alias metvals(7) = WD_mag_10m 'degrees E of MN
+' ",M," consumed
+'Alias metvals(8) = wind speed, knots
+' ",N," consumed
+Alias metvals(9) = WS_10m 'm/s
+' "M*" consumed
+'Alias metvals(10) = checksum
+Units P_10m = mbar
+Units T_10m = degC
+Units RH_10m = %
+Units dewpoint_10m = degC
+Units WD_true_10m = degTN
+Units WD_mag_10m = degMN
+Units WS_10m = m/s
+
+
+'TODO FIXME: in OS 29, the `GPS` instruction gained ability to perform
+'time-syncing against only NMEA data (no PPS reqd)... but it appears
+'to require the GPGGA sentence. Consider jumpering COM2 to COM1 Rx and
+'acquiring GPS data more neatly and also get time updates. May conflict 
+'with `NetworkTimeProtocol`?
+
+Public gpsstrs(13) As String * 16
+' "PRMC" consumed
+'Alias gpsstrs(1) = UTC in hhmmss.ss format
+'Alias gpsstrs(2) = "A" or "V"
+Alias gpsstrs(3) = strLatitude 'HHMM.MMMM
+'Alias gpsstrs(4) = "N" or "S"
+Alias gpsstrs(5) = strLongitude 'HHMM.MMMM
+'Alias gpsstrs(6) = "E" or "W"
+Alias gpsstrs(7) = strSOG 'knots
+Alias gpsstrs(8) = strCOG 'degrees E of TN
+Alias gpsstrs(9) = strDate 'DDMMYY
+Alias gpsstrs(10) = strMagVar 'degrees E/W
+Alias gpsstrs(11) = strMagVarSign ' "E" or "W"
+Alias gpsstrs(12) = strMode ' {A, D, E, M, S, N}
+Alias gpsstrs(13) = strChecksum
+
+Public gpstmp(4)
+Alias gpstmp(1) = lat_deg
+Alias gpstmp(2) = lat_min
+Alias gpstmp(3) = lon_deg
+Alias gpstmp(4) = lon_min
+
+Public gpsvals(3)
+Alias gpsvals(1) = latitude
+Alias gpsvals(2) = longitude
+Alias gpsvals(3) = mag_variation
+Public gpsmode As String * 1
+Units latitude = degrees N
+Units longitude = degrees E
+Units mag_variation = degrees E of TN
+
+
+BeginProg
+  SetStatus("StationName", "landfill")
+  SerialOpen(WX_COM,WX_BAUD,WX_FMT,0,WX_BUFF)
+
+	Scan (1,Sec,0,0)
+    SerialInRecord(WX_COM,wimda,DOLLAR_W,0,CRLF,wx_bytes,110)
+    SerialInRecord(WX_COM,gprmc,DOLLAR_G,0,CRLF,gps_bytes,110)
+    
+    If (Len(wimda)) Then
+      SplitStr(metvals(1),wimda,"",10,0)
+      P_10m *= 1000 'bar --> mbar
+
+      'HINT cursory tests show numeric parser is faster than character-based
+      'but unfortunately GPS data must be parsed as strings and therefore
+      'require character-based
+      SplitStr(gpsstrs(1),gprmc,",*",13,6)
+      lat_deg = Left(strLatitude,2) 'str->int
+      lat_min = Right(strLatitude,7)
+      lon_deg = Left(strLongitude,3)
+      lon_min = Right(strLongitude,7)
+      mag_variation = strMagVar
+      latitude = lat_deg + lat_min/60
+      longitude = lon_deg + lon_min/60
+      'HINT follow TN = MN + MV convention so E=(+), W=(-)
+      mag_variation *= IIF(StrComp(strMagVarSign, "W"), 1, -1)
+      gpsmode = strMode
+    EndIf
+	NextScan
+EndProg
+
