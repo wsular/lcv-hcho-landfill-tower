@@ -6,6 +6,8 @@
 ' Laboratory for Atmospheric Research at Washington State University
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
+Const DAYS_OF_DATA = 1
+
 Const WX_COM = Com1   'C1/C2
 Const WX_BAUD = 4800
 Const WX_FMT = 3 '8/n/1, RS232
@@ -52,7 +54,6 @@ Units WD_true_10m = degTN
 Units WD_mag_10m = degMN
 Units WS_10m = m/s
 
-
 'TODO FIXME: in OS 29, the `GPS` instruction gained ability to perform
 'time-syncing against only NMEA data (no PPS reqd)... but it appears
 'to require the GPGGA sentence. Consider jumpering COM2 to COM1 Rx and
@@ -85,10 +86,39 @@ Public gpsvals(3)
 Alias gpsvals(1) = latitude
 Alias gpsvals(2) = longitude
 Alias gpsvals(3) = mag_variation
-Public gpsmode As String * 1
-Units latitude = degrees N
-Units longitude = degrees E
-Units mag_variation = degrees E of TN
+Public gps_mode As String * 1
+Units latitude = degN
+Units longitude = degE
+Units mag_variation = degEofTN
+
+Dim WS_10m_Avg 'for field name aliasing in WD table
+Dim WD_10m_unit_Avg
+Dim WD_10m_epa_Std
+Units WS_10m_Avg = m/s
+Units WD_10m_unit_Avg = degTN
+Units WD_10m_epa_Std = deg
+
+
+DataTable(tsdata,True,86400*DAYS_OF_DATA)
+  DataInterval(0,1,Sec,5)
+  Sample(1,P_10m,IEEE4)
+  Sample(1,T_10m,FP2)
+  Sample(1,RH_10m,FP2)
+  Sample(1,dewpoint_10m,FP2)
+  Sample(1,WD_true_10m,FP2)
+    FieldNames("WD_10m")
+  Sample(1,WS_10m,FP2)
+  'Sample(1,latitude,IEEE4)
+  'Sample(1,longitude,IEEE4)
+  'Sample(1,mag_variation,FP2)
+  'Sample(1,gps_mode,String)
+EndTable
+
+DataTable(meanwd,True,24*4*DAYS_OF_DATA)
+  DataInterval(0,15,Min,0)
+  WindVector(1,WS_10m,WD_true_10m,FP2,(WS_10m=NAN OR WD_true_10m=NAN),0,0,0)
+    FieldNames("WS_10m_Avg,WD_10m_unit_Avg,WD_10m_epa_Std")
+EndTable
 
 
 BeginProg
@@ -102,7 +132,11 @@ BeginProg
     If (Len(wimda)) Then
       SplitStr(metvals(1),wimda,"",10,0)
       P_10m *= 1000 'bar --> mbar
-
+    Else
+      Move(metvals(1),10,NAN,1)
+    EndIf
+    
+    If (Len(gprmc)) Then
       'HINT cursory tests show numeric parser is faster than character-based
       'but unfortunately GPS data must be parsed as strings and therefore
       'require character-based
@@ -116,8 +150,14 @@ BeginProg
       longitude = lon_deg + lon_min/60
       'HINT follow TN = MN + MV convention so E=(+), W=(-)
       mag_variation *= IIF(StrComp(strMagVarSign, "W"), 1, -1)
-      gpsmode = strMode
+      gps_mode = strMode
+    Else
+      Move(gpsvals(1),3,NAN,1)
+      gps_mode = ""
     EndIf
+    
+    CallTable(tsdata)
+    CallTable(meanwd)
 	NextScan
 EndProg
 
