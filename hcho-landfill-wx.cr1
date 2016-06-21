@@ -8,6 +8,12 @@
 
 Const DAYS_OF_DATA = 1
 
+Const NTP_SERVER = "1.us.pool.ntp.org"
+Const UTC_OFFSET = -8*3600
+Const MAX_CLOCK_DRIFT = 500 'ms
+Public ntp_offset
+Units ntp_offset = ms
+
 Const WX_COM = Com1   'C1/C2
 Const WX_BAUD = 4800
 Const WX_FMT = 3 '8/n/1, RS232
@@ -179,6 +185,11 @@ BeginProg
   SlowSequence
   Scan(5,sec,1,0)
     SDI12Recorder(cs215(),7,"0","M!",1,0)
+  NextScan
+  
+  SlowSequence
+  Scan(5,Min,1,0)
+    ntp_offset = NetworkTimeProtocol(NTP_SERVER,UTC_OFFSET,MAX_CLOCK_DRIFT)
   NextScan
 EndProg
 
