@@ -24,7 +24,7 @@ Public wx_bytes
 Public gps_bytes
 
 
-
+Public VP, SVP, VP2, SVP2 'for calcing mean RH
 Public metvals(10)
 ' "IMDA," consumed
 'Alias metvals(1) = barometric pressure, inches of mercury
@@ -53,6 +53,13 @@ Units dewpoint_10m = degC
 Units WD_true_10m = degTN
 Units WD_mag_10m = degMN
 Units WS_10m = m/s
+
+Public cs215(2)
+Alias cs215(1) = T_2m
+Alias cs215(2) = RH_2m
+Units T_2m = degC
+Units RH_2m = %
+
 
 'TODO FIXME: in OS 29, the `GPS` instruction gained ability to perform
 'time-syncing against only NMEA data (no PPS reqd)... but it appears
@@ -124,16 +131,25 @@ EndTable
 BeginProg
   SetStatus("StationName", "landfill")
   SerialOpen(WX_COM,WX_BAUD,WX_FMT,0,WX_BUFF)
+  SW12(1) 'for T/RH probe
 
 	Scan (1,Sec,0,0)
     SerialInRecord(WX_COM,wimda,DOLLAR_W,0,CRLF,wx_bytes,110)
     SerialInRecord(WX_COM,gprmc,DOLLAR_G,0,CRLF,gps_bytes,110)
-    
+
     If (Len(wimda)) Then
       SplitStr(metvals(1),wimda,"",10,0)
       P_10m *= 1000 'bar --> mbar
+      VaporPressure(VP,T_10m,RH_10m)
+      SatVP(SVP,T_10m)
+      VaporPressure(VP2,T_2m,RH_2m)
+      SatVP(SVP2,T_2m)
     Else
       Move(metvals(1),10,NAN,1)
+      VP = NAN
+      SVP = NAN
+      VP2 = NAN
+      SVP2 = NAN
     EndIf
     
     If (Len(gprmc)) Then
@@ -159,5 +175,10 @@ BeginProg
     CallTable(tsdata)
     CallTable(meanwd)
 	NextScan
+
+  SlowSequence
+  Scan(5,sec,1,0)
+    SDI12Recorder(cs215(),7,"0","M!",1,0)
+  NextScan
 EndProg
 
