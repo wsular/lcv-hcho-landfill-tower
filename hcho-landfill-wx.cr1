@@ -1,0 +1,223 @@
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+' Meteorological tower at Asotin County Landfill
+' Lewiston-Clarkston Valley Formaldehyde Study (2016)
+'
+' Copyright 2016 :: Patrick O'Keeffe
+' Laboratory for Atmospheric Research at Washington State University
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+Const DAYS_OF_DATA = 1
+
+Const NTP_SERVER = "1.us.pool.ntp.org"
+Const UTC_OFFSET = -8*3600
+Const MAX_CLOCK_DRIFT = 500 'ms
+Public ntp_offset
+Units ntp_offset = ms
+
+Const WX_COM = Com1   'C1/C2
+Const WX_BAUD = 4800
+Const WX_FMT = 3 '8/n/1, RS232
+Const WX_BUFF = 250
+Const DOLLAR_W = &h2457 ' "$W"
+Const DOLLAR_G = &h2447 ' "$G"
+Const CRLF = &h0D0A ' <CR><LF>
+
+'record lengths from Table 1, PB100 WeatherStation Technical Manual r1.007
+Public wimda As String * 81+1 
+Public gprmc As String * 74+1
+
+Public wx_bytes
+Public gps_bytes
+
+
+Public VP, SVP, VP2, SVP2 'for calcing mean RH
+Public metvals(10)
+' "IMDA," consumed
+'Alias metvals(1) = barometric pressure, inches of mercury
+' ",I," consumed
+Alias metvals(2) = P_10m 'barometric pressure, bars
+' ",B," consumed
+Alias metvals(3) = T_10m 'air temperature, degrees C
+' ",C,,," consumed (no water temperature or units)
+Alias metvals(4) = RH_10m 'relative humidity, %
+' ",," consumed(no absolute humidity)
+Alias metvals(5) = dewpoint_10m 'dewpoint, degrees C
+' ",C," consumed
+Alias metvals(6) = WD_10m 'degrees E of TN
+' ",T," consumed
+Alias metvals(7) = WD_mag_10m 'degrees E of MN
+' ",M," consumed
+'Alias metvals(8) = wind speed, knots
+' ",N," consumed
+Alias metvals(9) = WS_10m 'm/s
+' "M*" consumed
+'Alias metvals(10) = checksum
+Units P_10m = mbar
+Units T_10m = degC
+Units RH_10m = %
+Units dewpoint_10m = degC
+Units WD_10m = degTN
+Units WD_mag_10m = degMN
+Units WS_10m = m/s
+
+Public cs215(2)
+Alias cs215(1) = T_2m
+Alias cs215(2) = RH_2m
+Units T_2m = degC
+Units RH_2m = %
+
+
+'TODO FIXME: in OS 29, the `GPS` instruction gained ability to perform
+'time-syncing against only NMEA data (no PPS reqd)... but it appears
+'to require the GPGGA sentence. Consider jumpering COM2 to COM1 Rx and
+'acquiring GPS data more neatly and also get time updates. May conflict 
+'with `NetworkTimeProtocol`?
+
+Public gpsstrs(13) As String * 16
+' "PRMC" consumed
+'Alias gpsstrs(1) = UTC in hhmmss.ss format
+'Alias gpsstrs(2) = "A" or "V"
+Alias gpsstrs(3) = strLatitude 'HHMM.MMMM
+'Alias gpsstrs(4) = "N" or "S"
+Alias gpsstrs(5) = strLongitude 'HHMM.MMMM
+'Alias gpsstrs(6) = "E" or "W"
+Alias gpsstrs(7) = strSOG 'knots
+Alias gpsstrs(8) = strCOG 'degrees E of TN
+Alias gpsstrs(9) = strDate 'DDMMYY
+Alias gpsstrs(10) = strMagVar 'degrees E/W
+Alias gpsstrs(11) = strMagVarSign ' "E" or "W"
+Alias gpsstrs(12) = strMode ' {A, D, E, M, S, N}
+Alias gpsstrs(13) = strChecksum
+
+Public gpstmp(4)
+Alias gpstmp(1) = lat_deg
+Alias gpstmp(2) = lat_min
+Alias gpstmp(3) = lon_deg
+Alias gpstmp(4) = lon_min
+
+Public gpsvals(3)
+Alias gpsvals(1) = latitude
+Alias gpsvals(2) = longitude
+Alias gpsvals(3) = mag_variation
+Public gps_mode As String * 1
+Units latitude = degN
+Units longitude = degE
+Units mag_variation = degEofTN
+
+Dim WS_10m_Avg 'for field name aliasing in WD table
+Dim WD_10m_unit_Avg
+Dim WD_10m_epa_Std
+Units WS_10m_Avg = m/s
+Units WD_10m_unit_Avg = degTN
+Units WD_10m_epa_Std = deg
+
+
+DataTable(tsdata,True,86400*DAYS_OF_DATA)
+  DataInterval(0,1,Sec,5)
+  'CardOut(0,86400*DAYS_OF_DATA)
+  Sample(1,P_10m,IEEE4)
+  Sample(1,T_10m,FP2)
+  Sample(1,RH_10m,FP2)
+  Sample(1,dewpoint_10m,FP2)
+  Sample(1,WS_10m,FP2)
+  Sample(1,WD_10m,FP2)
+  'Sample(1,latitude,IEEE4)
+  'Sample(1,longitude,IEEE4)
+  'Sample(1,mag_variation,FP2)
+  'Sample(1,gps_mode,String)
+EndTable
+
+DataTable(minutely,True,1440*DAYS_OF_DATA)
+  DataInterval(0,60,Sec,1)
+  'CardOut(0,1440*DAYS_OF_DATA)
+  Median(1,P_10m,60,IEEE4,P_10m=NAN)
+    FieldNames("P_10m")
+  Median(1,T_10m,60,FP2,T_10m=NAN)
+    FieldNames("T_10m")
+  Median(1,RH_10m,60,FP2,RH_10m=NAN)
+    FieldNames("RH_10m")
+  Median(1,WS_10m,60,FP2,WS_10m=NAN)
+    FieldNames("WS_10m")
+  Median(1,WD_10m,60,FP2,WD_10m=NAN)
+    FieldNames("WD_10m")
+  Median(1,T_2m,60,FP2,T_2m=NAN)
+    FieldNames("T_2m")
+  Median(1,RH_2m,60,FP2,RH_2m=NAN)
+    FieldNames("RH_2m")
+EndTable
+
+DataTable(halfhourly,True,48*DAYS_OF_DATA)
+  DataInterval(0,30,Min,0)
+  'CardOut(0,48*DAYS_OF_DATA)
+  Average(1,P_10m,IEEE4,P_10m=NAN
+  Average(1,T_10m,FP2,T_10m=NAN)
+  Average(1,(100*VP/SVP),FP2,(VP=NAN OR SVP=NAN))
+    FieldNames("RH_10m_Avg")
+  WindVector(1,WS_10m,WD_10m,FP2,(WS_10m=NAN OR WD_10m=NAN),0,0,0)
+    FieldNames("WS_10m_Avg,WD_10m_unit_Avg,WD_10m_epa_Std")
+  Average(1,T_2m,FP2,T_2m=NAN)
+  Average(1,(100*VP2/SVP2),FP2,(VP2=NAN OR SVP2=NAN))
+    FieldNames("RH_2m_Avg")
+EndTable
+
+
+BeginProg
+  SetStatus("StationName", "landfill")
+  SerialOpen(WX_COM,WX_BAUD,WX_FMT,0,WX_BUFF)
+  SW12(1) 'for T/RH probe
+
+	Scan (1,Sec,0,0)
+    SerialInRecord(WX_COM,wimda,DOLLAR_W,0,CRLF,wx_bytes,110)
+    SerialInRecord(WX_COM,gprmc,DOLLAR_G,0,CRLF,gps_bytes,110)
+
+    If (Len(wimda)) Then
+      SplitStr(metvals(1),wimda,"",10,0)
+      P_10m *= 1000 'bar --> mbar
+      VaporPressure(VP,T_10m,RH_10m)
+      SatVP(SVP,T_10m)
+      VaporPressure(VP2,T_2m,RH_2m)
+      SatVP(SVP2,T_2m)
+    Else
+      Move(metvals(1),10,NAN,1)
+      VP = NAN
+      SVP = NAN
+      VP2 = NAN
+      SVP2 = NAN
+    EndIf
+    
+    If (Len(gprmc)) Then
+      'HINT cursory tests show numeric parser is faster than character-based
+      'but unfortunately GPS data must be parsed as strings and therefore
+      'require character-based
+      SplitStr(gpsstrs(1),gprmc,",*",13,6)
+      lat_deg = Left(strLatitude,2) 'str->int
+      lat_min = Right(strLatitude,7)
+      lon_deg = Left(strLongitude,3)
+      lon_min = Right(strLongitude,7)
+      mag_variation = strMagVar
+      latitude = lat_deg + lat_min/60
+      longitude = lon_deg + lon_min/60
+      'HINT follow TN = MN + MV convention so E=(+), W=(-)
+      mag_variation *= IIF(StrComp(strMagVarSign, "W"), 1, -1)
+      gps_mode = strMode
+    Else
+      Move(gpsvals(1),3,NAN,1)
+      gps_mode = ""
+    EndIf
+    
+    CallTable(tsdata)
+    CallTable(minutely)
+    CallTable(halfhourly)
+	NextScan
+
+  SlowSequence
+  Scan(5,sec,1,0)
+    SDI12Recorder(cs215(),7,"0","M!",1,0)
+  NextScan
+  
+  SlowSequence
+  Scan(5,Min,1,0)
+    ntp_offset = NetworkTimeProtocol(NTP_SERVER,UTC_OFFSET,MAX_CLOCK_DRIFT)
+  NextScan
+EndProg
+
