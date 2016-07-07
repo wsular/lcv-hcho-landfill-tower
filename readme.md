@@ -16,15 +16,10 @@ Measurements include:
     * Wind speed
     * Wind direction
     * Location (GPS)
-* At 6ft (1.9m), via digital T/RH probe ([CS215; Campbell Scientific][cs215])
+* At 6.5ft (2m), via digital T/RH probe ([CS215; Campbell Scientific][cs215])
   in double-louvered radiation shield
     * Temperature
     * Relative humidity
-* At ?????, via 4-channel radiometer
-    * Long-wave incoming
-    * Long-wave outgoing
-    * Short-wave incoming
-    * Short-wave outgoing
 
 A programmable datalogger ([CR1000; Campbell Scientific][cr1k]) acquires and
 stores data to CompactFlash media. Raw measurements are aggregated into 1-min
@@ -38,7 +33,7 @@ protected.
 
 The tower ([UT30; Campbell Scientific][ut30]) is anchored to a weighted
 shipping pallet and guyed at mid-level with 1/8" wire rope to driven earth
-anchors ([DUCKBILL 88; Foresight Products).
+anchors ([DUCKBILL 88; Foresight Products][duck88]).
 
   [150wx]: http://www.airmartechnology.com/productdescription.html?id=155
   [cs215]: http://www.campbellsci.com/cs215-l
@@ -50,28 +45,27 @@ anchors ([DUCKBILL 88; Foresight Products).
 ### Quick Start
 
 1. Connect things
-    a. Power input (120VAC line source or 16-28VDC 20W solar panel) **to** 
-       battery-backed 12VDC regulator in enclosure
-    b. *If using solar power:* external 12V deep-cycle battery **to** 12VDC
-       regulator's auxilary battery terminal
-    c. Weather station data cable **to** RS422/RS232 converter data terminal
-       and 12VDC supply from datalogger
-    d. Antenna **to** broadband modem
+    * Power input (120VAC line source or 16-28VDC 20W solar panel) **to** 
+      battery-backed 12VDC regulator in enclosure
+    * *If using solar power:* external 12V deep-cycle battery **to** 12VDC
+      regulator's auxilary battery terminal
+    * Weather station data cable **to** RS422/RS232 converter data terminal
+      and 12VDC supply from datalogger
+    * Antenna **to** broadband modem
 2. Turn things on using ON/OFF switch of the battery-backed 12V regulator
 3. Validate operation by
-    a. Attaching keyboard display to CSI/O port
-    b. Navigating to <http://the.modem.ip.address> (and possibly entering
-       HTTP password)
-    c. (FUTURE:) Connect using Bluetooth and review data using 
-       [LoggerLink][https://www.campbellsci.com/loggerlink]
+    * Attaching keyboard display to CSI/O port
+    * Navigating to `http://the.modem.ip.address` (and possibly entering
+      HTTP password)
+    * (FUTURE:) Connect using Bluetooth and review data using 
+      [LoggerLink][https://www.campbellsci.com/loggerlink]
 
 
 ### Data Products
 
 Data files are in the "TOA5" format (Campbell Scientific), a multi-header
-comma-separated values file. 
-
-If you use the excellent [pandas](http://pandas.pydata.org) Python module, try:
+comma-separated values file. If you use the excellent
+[pandas](http://pandas.pydata.org) Python library, try this:
 
 ```python
 import pandas as pd
@@ -80,23 +74,24 @@ df = pd.read_csv('/path/to/data/file.dat',
                  index_col=0,    # timestamps in first column
                  header=1,       # column names in second row
                  skiprows=[2,3], # skip 3rd row (units) & 4th row (agg type)                 
-                 na_values=['NAN', -7999, 7999], # Table 129 (p484) in... 
-                 keep_default_na=False, # ...CR1000 manual rev. 4/13/15
-                 ## https://s.campbellsci.com/documents/us/manuals/cr1000.pdf
-                 parse_dates=True)
+                 na_values=['NAN', -7999, 7999], keep_default_na=False,
+                 # Table 129 (p484) in CR1000 manual rev. 4/13/15
+                 # https://s.campbellsci.com/documents/us/manuals/cr1000.pdf
+                 parse_dates=True) # format is inferred
 ```
 
-#### Table `halfhourly`
+#### Table files: `*_halfhourly.dat`
 
 Primary data product.
 
 * Table name: halfhourly
 * Record interval: 30 minutes (closed left, label right)
-* Aggregation: mean values
+* Aggregation: mean 30-min values of real-time measurements
     * mean RH is derived from mean actual & saturated water vapor pressures
     * standard deviation of wind direction is calculated using the Yamartino
       algorithm, which complies with EPA guidelines for use with straight-line
-      Gaussian dispersion models to model plume transport
+      Gaussian dispersion models to model plume transport (ref: *WindVector,
+      CRBasic Program Reference for CR1000.Std.29. Campbell Scientific Inc.*)
 
 > TODO see if model will be variable-trajectory so use option 2 instead of 0?
 
@@ -111,13 +106,13 @@ Primary data product.
 | T_2m_Avg          | degC  | mean air temperature at 2m                   |
 | RH_2m_Avg         | %     | mean relative humidity at 2m                 |
 
-#### Table `minutely`
+#### Table files: `*_minutely.dat`
 
 Secondary data product.
 
 * Table name: minutely
 * Record interval: 1 minute (closed left, label right)
-* Aggregation: median values
+* Aggregation: median 1-min values of real-time measurements
 
 | Column name   | Units | Description                    |
 |---------------|-------|--------------------------------|
@@ -129,13 +124,14 @@ Secondary data product.
 | T_2m          | degC  | air temperature at 2m          |
 | RH_2m         | %     | relative humidity at 2m        |
 
-#### Table `tsdata`
+#### Table files: `*_tsdata.dat`
 
 Intended for diagnostics mostly, or teaching etc. *Limited to weather station
 only; ground-level T/RH probe is not included.*
 
 * Table name: tsdata
-* Record interval: 1 second (no aggregation)
+* Record interval: 1 second
+* Aggregation: none; represents real-time measurements
 
 | Column name   | Units | Description                    |
 |---------------|-------|--------------------------------|
@@ -154,23 +150,23 @@ only; ground-level T/RH probe is not included.*
 Preferred tower location, with measurements to closest building and windroses
 for the nearest airport (across the valley) (source: <http://windhistory.com>).
 
-![Tower location planning in Google Earth][images/tower-site-planning.png]
+![Tower location planning in Google Earth](images/tower-site-planning.png)
 
 #### Post-install
 
 Here's a view of the erect tower (facing almost SE):
 
-![Landfill met tower (view to SE)][images/IMG_20160609_130016-small.png]
+![Landfill met tower (view to SE)](images/IMG_20160609_130016-small.png)
 
 Another image from outside the gates:
 
-![Landfill met tower (view to SSW)][images/IMG_20160609_130038-small.png]
+![Landfill met tower (view to SSW)](images/IMG_20160609_130038-small.png)
 
 
 ### Initial Device Setup
 
 Step-by-step instructions are available in the relevant user manuals. See
-[References](#references) below.
+[References](#markdown-header-references) below.
 
 #### Weather Station (150WX)
 
@@ -239,11 +235,14 @@ LAN side) and set the following configuration (on factory defaults):
 Apply and reboot.
 
 
-### References <a name="references"/>
+### References
 
 * Campbell Scientific, Inc. *CR1000 Measurement and Control System Operator's
   Manual.* Revision 2015 Apr 13. 
   Online: <https://s.campbellsci.com/documents/us/manuals/cr1000.pdf>
+
+* Campbell Scientific, Inc. *CRBasic Program Reference: WindVector.* Version
+  CR1000.Std.29. CRBasic Editor.
 
 * Campbell Scientific, Inc. *CS215 Temperature and Relative Humidity Probe
   Instruction Manual.* Revision 2016 Apr.
