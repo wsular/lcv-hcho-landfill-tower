@@ -6,7 +6,7 @@
 ' Laboratory for Atmospheric Research at Washington State University
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-Const DAYS_OF_DATA = 1
+Const DAYS_OF_DATA = 28
 
 Const NTP_SERVER = "1.us.pool.ntp.org"
 Const UTC_OFFSET = -8*3600
@@ -112,9 +112,9 @@ Units WD_10m_unit_Avg = degTN
 Units WD_10m_epa_Std = deg
 
 
-DataTable(tsdata,True,86400*DAYS_OF_DATA)
+DataTable(tsdata,True,86400*3)
   DataInterval(0,1,Sec,5)
-  'CardOut(0,86400*DAYS_OF_DATA)
+  CardOut(0,86400*DAYS_OF_DATA)
   Sample(1,P_10m,IEEE4)
   Sample(1,T_10m,FP2)
   Sample(1,RH_10m,FP2)
@@ -127,9 +127,9 @@ DataTable(tsdata,True,86400*DAYS_OF_DATA)
   'Sample(1,gps_mode,String)
 EndTable
 
-DataTable(minutely,True,1440*DAYS_OF_DATA)
+DataTable(minutely,True,1440*3)
   DataInterval(0,60,Sec,1)
-  'CardOut(0,1440*DAYS_OF_DATA)
+  CardOut(0,1440*DAYS_OF_DATA)
   Median(1,P_10m,60,IEEE4,P_10m=NAN)
     FieldNames("P_10m")
   Median(1,T_10m,60,FP2,T_10m=NAN)
@@ -146,9 +146,9 @@ DataTable(minutely,True,1440*DAYS_OF_DATA)
     FieldNames("RH_2m")
 EndTable
 
-DataTable(halfhourly,True,48*DAYS_OF_DATA)
+DataTable(halfhourly,True,48*3)
   DataInterval(0,30,Min,0)
-  'CardOut(0,48*DAYS_OF_DATA)
+  CardOut(0,48*DAYS_OF_DATA)
   Average(1,P_10m,IEEE4,P_10m=NAN
   Average(1,T_10m,FP2,T_10m=NAN)
   Average(1,(100*VP/SVP),FP2,(VP=NAN OR SVP=NAN))
