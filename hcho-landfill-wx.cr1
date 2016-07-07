@@ -6,6 +6,11 @@
 ' Laboratory for Atmospheric Research at Washington State University
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
+' TODO
+' [] integrate door switch
+' [] increase resolution of latitude/longitude, probably by keeping
+'    separate degrees and decimal degrees
+
 Const DAYS_OF_DATA = 28
 
 Const NTP_SERVER = "1.us.pool.ntp.org"
@@ -72,6 +77,9 @@ Units RH_2m = %
 'to require the GPGGA sentence. Consider jumpering COM2 to COM1 Rx and
 'acquiring GPS data more neatly and also get time updates. May conflict 
 'with `NetworkTimeProtocol`?
+
+'TODO FIXME: storing latitude/longitude values in Float truncates them beyond
+'required precision for mapping
 
 Public gpsstrs(13) As String * 16
 ' "PRMC" consumed
