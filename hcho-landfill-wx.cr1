@@ -173,6 +173,8 @@ BeginProg
   SetStatus("StationName", "landfill")
   SerialOpen(WX_COM,WX_BAUD,WX_FMT,0,WX_BUFF)
   SW12(1) 'for T/RH probe
+  Move(metvals(1),10,NAN,1)
+  Move(cs215(1),2,NAN,1)
 
 	Scan (1,Sec,0,0)
     SerialInRecord(WX_COM,wimda,DOLLAR_W,0,CRLF,wx_bytes,110)

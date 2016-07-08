@@ -1,6 +1,15 @@
 Changelog for LCV-HCHO Landfill Met Tower
 =========================================
 
+next release
+------------
+
+### Issues Fixed
+
+* Initialize final storage variables to NAN to prevent default value ("0") from
+  being stored or included in aggregate values
+
+
 v0.1.1 (2016-07-07)
 -------------------
 
