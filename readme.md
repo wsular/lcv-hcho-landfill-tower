@@ -38,7 +38,7 @@ anchors ([DUCKBILL 88; Foresight Products][duck88]).
   [150wx]: http://www.airmartechnology.com/productdescription.html?id=155
   [cs215]: http://www.campbellsci.com/cs215-l
   [cr1k]: http://www.campbellsci.com/cr1000
-  [ut-30]: http://www.campbellsci.com/ut30
+  [ut30]: http://www.campbellsci.com/ut30
   [duck88]: http://www.earthanchor.com/duckbill/what-is-duckbill/models/
 
 
@@ -50,7 +50,7 @@ anchors ([DUCKBILL 88; Foresight Products][duck88]).
     * *If using solar power:* external 12V deep-cycle battery **to** 12VDC
       regulator's auxilary battery terminal
     * Weather station data cable **to** RS422/RS232 converter data terminal
-      and 12VDC supply from datalogger
+      *and* 12VDC supply from datalogger
     * Antenna **to** broadband modem
 2. Turn things on using ON/OFF switch of the battery-backed 12V regulator
 3. Validate operation by
@@ -156,11 +156,11 @@ for the nearest airport (across the valley) (source: <http://windhistory.com>).
 
 Here's a view of the erect tower (facing almost SE):
 
-![Landfill met tower (view to SE)](images/IMG_20160609_130016-small.png)
+![Landfill met tower (view to SE)](images/IMG_20160609_130016-small.jpg)
 
 Another image from outside the gates:
 
-![Landfill met tower (view to SSW)](images/IMG_20160609_130038-small.png)
+![Landfill met tower (view to SSW)](images/IMG_20160609_130038-small.jpg)
 
 
 ### Initial Device Setup
@@ -230,7 +230,7 @@ LAN side) and set the following configuration (on factory defaults):
     * [Make SSH Keys] button: Press if SSH is not initalized 
 * Services > Time (SNTP)
     * Enable time update: Enabled
-    * SNTP Server Address: *[pick one](http://support.ntp.org/servers)*
+    * SNTP Server Address: *[pick one](http://www.pool.ntp.org/en/)*
 
 Apply and reboot.
 
