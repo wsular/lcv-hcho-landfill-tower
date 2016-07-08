@@ -154,6 +154,10 @@ for the nearest airport (across the valley) (source: <http://windhistory.com>).
 
 #### Post-install
 
+The tower actually landed here:
+
+![Tower actual location in Google Earth](images/tower-location.png)
+
 Here's a view of the erect tower (facing almost SE):
 
 ![Landfill met tower (view to SE)](images/IMG_20160609_130016-small.jpg)
