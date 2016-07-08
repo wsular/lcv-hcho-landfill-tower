@@ -8,6 +8,8 @@ next release
 
 * Initialize final storage variables to NAN to prevent default value ("0") from
   being stored or included in aggregate values
+* Check for sensor-specific NAN representations from CS215 temp/RH probe
+  (`0` and `-100`) and, if found, store `NAN` instead
 
 
 v0.1.1 (2016-07-07)
