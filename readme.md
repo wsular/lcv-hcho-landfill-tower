@@ -71,14 +71,21 @@ comma-separated values file. If you use the excellent
 import pandas as pd
 
 df = pd.read_csv('/path/to/data/file.dat',
-                 index_col=0,    # timestamps in first column
-                 header=1,       # column names in second row
-                 skiprows=[2,3], # skip 3rd row (units) & 4th row (agg type)                 
-                 na_values=['NAN', -7999, 7999], keep_default_na=False,
+                 index_col=0, # timestamps in first column
+                 parse_dates=True, # iso8601
+                 header=1, # 1st line metadata 2nd headers
+                 skiprows=[2,3], # 3rd units 4th agg type
                  # Table 129 (p484) in CR1000 manual rev. 4/13/15
                  # https://s.campbellsci.com/documents/us/manuals/cr1000.pdf
-                 parse_dates=True) # format is inferred
+                 na_values=['NAN', -7999, 7999], keep_default_na=False)
 ```
+
+#### Plotting Examples
+
+See these two Jupyter notebooks (rendered via nbviewer):
+
+* [Example Windrose plots](http://nbviewer.jupyter.org/urls/bitbucket.org/wsular/2016-hcho-landfill-met-tower/raw/master/data/Example%20windrose%20plots.ipynb)
+* [Example Bokeh plots](http://nbviewer.jupyter.org/urls/bitbucket.org/wsular/2016-hcho-landfill-met-tower/raw/master/data/Example%20Bokeh%20plots.ipynb)
 
 #### Table files: `*_halfhourly.dat`
 
@@ -153,6 +160,10 @@ for the nearest airport (across the valley) (source: <http://windhistory.com>).
 ![Tower location planning in Google Earth](images/tower-site-planning.png)
 
 #### Post-install
+
+The tower actually landed here:
+
+![Tower actual location in Google Earth](images/tower-location.png)
 
 Here's a view of the erect tower (facing almost SE):
 
