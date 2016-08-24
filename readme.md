@@ -4,6 +4,8 @@ Landfill Met Tower
 Lewiston-Clarkston Valley Formaldehyde Study (2016-2017)
 --------------------------------------------------------
 
+> Online: <https://bitbucket.org/wsular/2016-hcho-landfill-met-tower>
+
 Documentation for the meterogological tower at the Asotin landfill. This tower
 provides local weather conditions in the up-river portion of the LC Valley.
 Measurements include:
