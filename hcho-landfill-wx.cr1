@@ -173,6 +173,8 @@ BeginProg
   SetStatus("StationName", "landfill")
   SerialOpen(WX_COM,WX_BAUD,WX_FMT,0,WX_BUFF)
   SW12(1) 'for T/RH probe
+  Move(metvals(1),10,NAN,1)
+  Move(cs215(1),2,NAN,1)
 
 	Scan (1,Sec,0,0)
     SerialInRecord(WX_COM,wimda,DOLLAR_W,0,CRLF,wx_bytes,110)
@@ -221,6 +223,8 @@ BeginProg
   SlowSequence
   Scan(5,sec,1,0)
     SDI12Recorder(cs215(),7,"0","M!",1,0)
+    If (T_2m=0 OR T_2m=-100) Then T_2m = NAN
+    If (RH_2m=0 OR RH_2m=-100) Then RH_2m = NAN
   NextScan
   
   SlowSequence
