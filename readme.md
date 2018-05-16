@@ -4,8 +4,6 @@ Landfill Met Tower
 Lewiston-Clarkston Valley Formaldehyde Study (2016-2017)
 --------------------------------------------------------
 
-> Online: <https://bitbucket.org/wsular/2016-hcho-landfill-met-tower>
-
 Documentation for the meterogological tower at the Asotin landfill. This tower
 provides local weather conditions in the up-river portion of the LC Valley.
 Measurements include:
@@ -60,7 +58,7 @@ anchors ([DUCKBILL 88; Foresight Products][duck88]).
     * Navigating to `http://the.modem.ip.address` (and possibly entering
       HTTP password)
     * (FUTURE:) Connect using Bluetooth and review data using 
-      [LoggerLink][https://www.campbellsci.com/loggerlink]
+      [LoggerLink](https://www.campbellsci.com/loggerlink)
 
 
 ### Data Products
@@ -86,8 +84,8 @@ df = pd.read_csv('/path/to/data/file.dat',
 
 See these two Jupyter notebooks (rendered via nbviewer):
 
-* [Example Windrose plots](http://nbviewer.jupyter.org/urls/bitbucket.org/wsular/2016-hcho-landfill-met-tower/raw/master/data/Example%20windrose%20plots.ipynb)
-* [Example Bokeh plots](http://nbviewer.jupyter.org/urls/bitbucket.org/wsular/2016-hcho-landfill-met-tower/raw/master/data/Example%20Bokeh%20plots.ipynb)
+* [Example Windrose plots](http://nbviewer.jupyter.org/urls/github.com/wsular/lcv-hcho-landfill-tower/raw/master/data/Example%20windrose%20plots.ipynb)
+* [Example Bokeh plots](http://nbviewer.jupyter.org/urls/github.com/wsular/lcv-hcho-landfill-tower/raw/master/data/Example%20Bokeh%20plots.ipynb)
 
 #### Table files: `*_halfhourly.dat`
 
